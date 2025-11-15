@@ -22,6 +22,31 @@ class simpleMLP(nn.Module):
         x = self.fc2(x)
         return x
 
+def train_one_epoh(model, loader, criterion, optimizer, device):
+    model.train()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    for images, labels in loader:
+        images = images.to(device)
+        labels = labels.to(device)
+
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()*images.size(0)
+        _, predicted = outputs.max(1)
+        correct += predicted.eq(labels).sum().item()
+        total += labels.size(0)
+
+    epoch_loss = running_loss/total
+    epoch_accuracy = correct/total
+    return epoch_loss, epoch_accuracy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -40,4 +65,7 @@ test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num
 
 
 model = simpleMLP(hidden_size=64).to(device)
-print(model)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
