@@ -8,7 +8,7 @@ import time
 
 
 class simpleMLP(nn.Module):
-    def __init__(self, hidden_size=64):
+    def __init__(self, hidden_size=512):
         super(simpleMLP, self).__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(3 * 32 * 32, hidden_size)
@@ -22,7 +22,7 @@ class simpleMLP(nn.Module):
         x = self.fc2(x)
         return x
 
-def train_one_epoh(model, loader, criterion, optimizer, device):
+def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
     correct = 0
@@ -48,24 +48,63 @@ def train_one_epoh(model, loader, criterion, optimizer, device):
     epoch_accuracy = correct/total
     return epoch_loss, epoch_accuracy
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def evaluate(model, loader, criterion, device):
+    model.eval()
+    running_loss = 0.0
+    correct = 0
+    total = 0
 
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465),
+    with torch.no_grad():    
+        for images, labels in loader:
+            images = images.to(device)
+            labels = labels.to(device)
+
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+
+            running_loss += loss.item()*images.size(0)
+            _, predicted = outputs.max(1)
+            correct += predicted.eq(labels).sum().item()
+            total += labels.size(0)
+
+    epoch_loss = running_loss / total
+    epoch_accuracy = correct / total
+    return epoch_loss, epoch_accuracy
+
+if __name__ == "__main__":
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465),
                          (0.2470, 0.2435, 0.2616))
-])
+    ])
 
-train_dataset = datasets.CIFAR10(root="./data", train=True, download=True, transform=transform)
-test_dataset = datasets.CIFAR10(root="./data", train=False, download=True, transform=transform)
+    train_dataset = datasets.CIFAR10(root="./data", train=True, download=True, transform=transform)
+    test_dataset = datasets.CIFAR10(root="./data", train=False, download=True, transform=transform)
 
-batch_size = 128
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    batch_size = 128
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
 
-model = simpleMLP(hidden_size=64).to(device)
+    model = simpleMLP(hidden_size=512).to(device)
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+    num_epochs = 20
+
+    for epoch in range(num_epochs):
+        start = time.perf_counter()
+        train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
+        test_loss, test_acc = evaluate(model, test_loader, criterion, device)
+        end = time.perf_counter()
+        total_time = end-start
+
+        print(f"Epoch [{epoch+1}/{num_epochs}] | "
+              f"Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f} | "
+              f"Test Loss: {test_loss:.4f} | Test Accuracy: {test_acc:.4f} | "
+              f"Time: {total_time:.1f}sec"
+             )
