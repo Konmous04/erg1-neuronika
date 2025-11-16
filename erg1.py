@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import time
+import matplotlib.pyplot as plt
 
 
 class simpleMLP(nn.Module):
@@ -73,6 +74,11 @@ def evaluate(model, loader, criterion, device):
 
 if __name__ == "__main__":
 
+    train_list_loss = []
+    train_list_acc = []
+    test_list_loss = []
+    test_list_acc = []
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     transform = transforms.Compose([
@@ -94,7 +100,7 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 20
+    num_epochs = 40
 
     for epoch in range(num_epochs):
         start = time.perf_counter()
@@ -102,9 +108,35 @@ if __name__ == "__main__":
         test_loss, test_acc = evaluate(model, test_loader, criterion, device)
         end = time.perf_counter()
         total_time = end-start
+        train_list_loss.append(train_loss)
+        train_list_acc.append(train_acc)
+        test_list_loss.append(test_loss)
+        test_list_acc.append(test_acc)
 
         print(f"Epoch [{epoch+1}/{num_epochs}] | "
               f"Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f} | "
               f"Test Loss: {test_loss:.4f} | Test Accuracy: {test_acc:.4f} | "
               f"Time: {total_time:.1f}sec"
              )
+        
+    x1 = range(len(train_list_loss))
+    x2 = range(len(train_list_acc))
+    x3 = range(len(test_list_loss))
+    x4 = range(len(test_list_acc))
+
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(8, 8))
+
+    ax1.plot(x1, train_list_loss)
+    ax1.set_title("Train Loss")
+
+    ax2.plot(x2, train_list_acc)
+    ax2.set_title("Train Accuracy")
+
+    ax3.plot(x3, test_list_loss)
+    ax3.set_title("Test Loss")
+
+    ax4.plot(x4, test_list_acc)
+    ax4.set_title("Test Accuracy")
+
+    plt.tight_layout()
+    plt.show()
