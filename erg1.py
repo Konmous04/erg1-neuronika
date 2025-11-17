@@ -9,18 +9,28 @@ import matplotlib.pyplot as plt
 
 
 class simpleMLP(nn.Module):
-    def __init__(self, hidden_size=512):
+    def __init__(self, h1=512, h2=512):
         super(simpleMLP, self).__init__()
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(3 * 32 * 32, hidden_size)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, 10)
+        self.fc1 = nn.Linear(3 * 32 * 32, h1)
+        self.relu1 = nn.ReLU()
+    
+        self.fc2 = nn.Linear(h1, h2)
+        self.relu2 = nn.ReLU()
+    
+        self.fc3 = nn.Linear(h2, 10)
 
     def forward(self, x):
         x = self.flatten(x)
+
         x = self.fc1(x)
-        x = self.relu(x)
+        x = self.relu1(x)
+
         x = self.fc2(x)
+        x = self.relu2(x)
+
+        x = self.fc3(x)
+        
         return x
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
@@ -95,12 +105,12 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
 
-    model = simpleMLP(hidden_size=512).to(device)
+    model = simpleMLP(h1=512, h2=512).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 40
+    num_epochs = 10
 
     for epoch in range(num_epochs):
         start = time.perf_counter()
