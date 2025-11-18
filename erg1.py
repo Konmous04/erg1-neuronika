@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 class simpleMLP(nn.Module):
-    def __init__(self, h1=1024, h2=1024, h3=1024):
+    def __init__(self, h1=1024, h2=1024, h3=512, h4=256):
         super(simpleMLP, self).__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(3 * 32 * 32, h1)
@@ -21,7 +21,10 @@ class simpleMLP(nn.Module):
         self.fc3 = nn.Linear(h2, h3)
         self.relu3 = nn.ReLU()
 
-        self.fc4 = nn.Linear(h3, 10)
+        self.fc4 = nn.Linear(h3, h4)
+        self.relu4 = nn.ReLU()
+
+        self.fc5 = nn.Linear(h4, 10)
 
     def forward(self, x):
         x = self.flatten(x)
@@ -36,6 +39,9 @@ class simpleMLP(nn.Module):
         x = self.relu3(x)
 
         x = self.fc4(x)
+        x = self.relu4(x)
+
+        x = self.fc5(x)
         
         return x
 
@@ -111,7 +117,7 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
 
-    model = simpleMLP(h1=1024, h2=1024, h3=1024).to(device)
+    model = simpleMLP(h1=1024, h2=1024, h3=512, h4=256).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
