@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 class simpleMLP(nn.Module):
-    def __init__(self, h1=2048, h2=2048, h3=2048, h4=2048, h5=2048, h6=2048):
+    def __init__(self, h1=1024, h2=1024, h3=1024, h4=1024, h5=512, h6=256, h7=128):
         super(simpleMLP, self).__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(3 * 32 * 32, h1)
@@ -30,7 +30,10 @@ class simpleMLP(nn.Module):
         self.fc6 = nn.Linear(h5, h6)
         self.relu6 = nn.ReLU()
 
-        self.fc7 = nn.Linear(h6, 10)
+        self.fc7 = nn.Linear(h6, h7)
+        self.relu7 = nn.ReLU()
+
+        self.fc8 = nn.Linear(h7, 10)
 
     def forward(self, x):
         x = self.flatten(x)
@@ -54,6 +57,9 @@ class simpleMLP(nn.Module):
         x = self.relu6(x)
 
         x = self.fc7(x)
+        x = self.relu7(x)
+
+        x = self.fc8(x)
         
         return x
 
@@ -129,12 +135,12 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
 
-    model = simpleMLP(h1=2048, h2=2048, h3=2048, h4=2048, h5=2048, h6=2048).to(device)
+    model = simpleMLP(h1=1024, h2=1024, h3=1024, h4=1024, h5=512, h6=256, h7=128).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 10
+    num_epochs = 20
 
     for epoch in range(num_epochs):
         
