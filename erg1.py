@@ -8,9 +8,9 @@ import time
 import matplotlib.pyplot as plt
 
 
-class simpleMLP(nn.Module):
+class mlp(nn.Module):
     def __init__(self, h1=1024, h2=1024, h3=512, h4=256, h5=128, h6=64, h7=32):
-        super(simpleMLP, self).__init__()
+        super(mlp, self).__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(3 * 32 * 32, h1)
         self.relu1 = nn.ReLU()
@@ -135,13 +135,14 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
 
-    model = simpleMLP(h1=1024, h2=1024, h3=512, h4=256, h5=128, h6=64, h7=32).to(device)
+    model = mlp(h1=1024, h2=1024, h3=512, h4=256, h5=128, h6=64, h7=32).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     num_epochs = 30
 
+    start_t = time.perf_counter()
     for epoch in range(num_epochs):
         
         start = time.perf_counter()
@@ -160,7 +161,9 @@ if __name__ == "__main__":
               f"Test Loss: {test_loss:.4f} | Test Accuracy: {test_acc:.4f} | "
               f"Time: {total_time:.1f}sec"
              )
-        
+    end_t = time.perf_counter()
+    print(f"Total Running Time: {end_t-start_t:.1f}sec")
+
     x1 = range(len(train_list_loss))
     x2 = range(len(train_list_acc))
     x3 = range(len(test_list_loss))
